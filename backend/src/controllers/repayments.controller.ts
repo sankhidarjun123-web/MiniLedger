@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { pool } from "../connectDB.js";
 
+
 export const addRepayment = async (req: Request, res: Response) => {
   const userId = req.userId;
   const { loanId, amount, repaymentDate, notes } = req.body;
@@ -36,10 +37,6 @@ export const addRepayment = async (req: Request, res: Response) => {
       message: "Invalid repayment date.",
     });
   }
-
-  const imageUrl = req.file
-    ? `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`
-    : null;
 
   const client = await pool.connect();
 
@@ -90,13 +87,18 @@ export const addRepayment = async (req: Request, res: Response) => {
 
     const result = await client.query(
       `INSERT INTO repayments
-        (loan_id, amount, image_url, repayment_date, notes)
-       VALUES ($1, $2, $3, $4, $5)
-       RETURNING id, loan_id, amount, image_url, repayment_date, notes, created_at`,
+    (loan_id, amount, repayment_date, notes)
+   VALUES ($1, $2, $3, $4)
+   RETURNING
+    id,
+    loan_id,
+    amount,
+    repayment_date,
+    notes,
+    created_at`,
       [
         loanId,
         parsedAmount,
-        imageUrl,
         parsedDate.toISOString(),
         typeof notes === "string" ? notes.trim() || null : null,
       ]
@@ -107,7 +109,9 @@ export const addRepayment = async (req: Request, res: Response) => {
     return res.status(201).json({
       success: true,
       message: "Repayment recorded successfully.",
-      repayment: result.rows[0],
+      repayment: {
+        ...result.rows[0]
+      },
       remainingAmount: remainingAmount - parsedAmount,
     });
   } catch (error) {
@@ -214,28 +218,27 @@ export const updateRepayment = async (req: Request, res: Response) => {
       });
     }
 
-    const imageUrl = req.file
-      ? `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`
-      : null;
-
     const result = await client.query(
       `UPDATE repayments
-       SET
-         amount = $1,
-         repayment_date = $2,
-         notes = $3,
-         image_url = COALESCE($4, image_url)
-       WHERE id = $5
-       RETURNING *`,
+   SET
+     amount = $1,
+     repayment_date = $2,
+     notes = $3
+   WHERE id = $4
+   RETURNING
+     id,
+     loan_id,
+     amount,
+     repayment_date,
+     notes,
+     created_at`,
       [
         parsedAmount,
         parsedDate,
-        notes?.trim() || null,
-        imageUrl,
+        typeof notes === "string" ? notes.trim() || null : null,
         repaymentId,
       ]
     );
-
     await client.query("COMMIT");
     transactionStarted = false;
 

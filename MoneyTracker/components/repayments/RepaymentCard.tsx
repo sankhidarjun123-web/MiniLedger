@@ -1,15 +1,16 @@
+
 import { useState } from "react";
+
 import {
   View,
   Text,
-  Image,
   TouchableOpacity,
   TextInput,
   Alert,
   ActivityIndicator,
 } from "react-native";
+
 import DateTimePicker from "@react-native-community/datetimepicker";
-import * as ImagePicker from "expo-image-picker";
 
 import type { Repayment } from "../../types";
 import { api } from "../../config/axios";
@@ -24,50 +25,25 @@ export default function RepaymentCard({
   onChanged,
 }: Props) {
   const [isEditing, setIsEditing] = useState(false);
-  const [amount, setAmount] = useState(String(repayment.amount));
-  const [notes, setNotes] = useState(repayment.notes || "");
+
+  const [amount, setAmount] = useState(
+    String(repayment.amount)
+  );
+
+  const [notes, setNotes] = useState(
+    repayment.notes || ""
+  );
+
   const [repaymentDate, setRepaymentDate] = useState(
     new Date(repayment.repayment_date)
   );
+
   const [showDatePicker, setShowDatePicker] = useState(false);
-
-  const [image, setImage] =
-    useState<ImagePicker.ImagePickerAsset | null>(null);
-
   const [loading, setLoading] = useState(false);
 
-  // Select a replacement payment proof image
-  const handlePickImage = async () => {
-    try {
-      const permission =
-        await ImagePicker.requestMediaLibraryPermissionsAsync();
-
-      if (!permission.granted) {
-        Alert.alert(
-          "Permission Required",
-          "Please allow gallery access to upload an image."
-        );
-        return;
-      }
-
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ["images"],
-        allowsEditing: true,
-        quality: 0.7,
-      });
-
-      if (!result.canceled && result.assets.length > 0) {
-        setImage(result.assets[0]);
-      }
-    } catch (error) {
-      console.error("Image picker error:", error);
-      Alert.alert("Error", "Unable to select image.");
-    }
-  };
-
-  // Update repayment
+  // Update repayment.
   const handleUpdate = async () => {
-    const parsedAmount = Number(amount);
+    const parsedAmount = Number(amount.trim());
 
     if (
       !amount.trim() ||
@@ -85,37 +61,29 @@ export default function RepaymentCard({
     try {
       setLoading(true);
 
-      const formData = new FormData();
-
-      formData.append("amount", String(parsedAmount));
-      formData.append("repaymentDate", repaymentDate.toISOString());
-      formData.append("notes", notes.trim());
-
-      if (image) {
-        formData.append(
-          "image",
-          {
-            uri: image.uri,
-            name: image.fileName || `repayment-${Date.now()}.jpg`,
-            type: image.mimeType || "image/jpeg",
-          } as any
-        );
-      }
-
       const response = await api.put(
         `/repayments/change/${repayment.id}`,
-        formData
+        {
+          amount: parsedAmount,
+          repaymentDate: repaymentDate.toISOString(),
+          notes: notes.trim(),
+        }
       );
 
       if (response.data.success) {
-        Alert.alert("Success", "Repayment updated successfully.");
         setIsEditing(false);
-        setImage(null);
+
+        Alert.alert(
+          "Success",
+          "Repayment updated successfully."
+        );
+
         onChanged?.();
       } else {
         Alert.alert(
           "Error",
-          response.data.message || "Failed to update repayment."
+          response.data.message ||
+            "Failed to update repayment."
         );
       }
     } catch (error: any) {
@@ -126,14 +94,15 @@ export default function RepaymentCard({
 
       Alert.alert(
         "Error",
-        error.response?.data?.message || "Failed to update repayment."
+        error.response?.data?.message ||
+          "Failed to update repayment."
       );
     } finally {
       setLoading(false);
     }
   };
 
-  // Delete repayment
+  // Delete repayment.
   const handleDelete = () => {
     Alert.alert(
       "Delete Repayment",
@@ -155,12 +124,17 @@ export default function RepaymentCard({
               );
 
               if (response.data.success) {
-                Alert.alert("Success", "Repayment deleted successfully.");
+                Alert.alert(
+                  "Success",
+                  "Repayment deleted successfully."
+                );
+
                 onChanged?.();
               } else {
                 Alert.alert(
                   "Error",
-                  response.data.message || "Failed to delete repayment."
+                  response.data.message ||
+                    "Failed to delete repayment."
                 );
               }
             } catch (error: any) {
@@ -183,11 +157,16 @@ export default function RepaymentCard({
     );
   };
 
+  // Cancel editing and restore original values.
   const handleCancelEdit = () => {
     setAmount(String(repayment.amount));
     setNotes(repayment.notes || "");
-    setRepaymentDate(new Date(repayment.repayment_date));
-    setImage(null);
+
+    setRepaymentDate(
+      new Date(repayment.repayment_date)
+    );
+
+    setShowDatePicker(false);
     setIsEditing(false);
   };
 
@@ -195,7 +174,7 @@ export default function RepaymentCard({
     <View className="mb-3 rounded-2xl border border-[#293548] bg-[#1B2432] p-4">
 
       {/* Repayment Information */}
-      <View className="flex-row">
+      <View className="flex-row items-center">
         <View className="flex-1">
           <Text className="font-semibold text-white">
             {repayment.friend_name}
@@ -206,7 +185,9 @@ export default function RepaymentCard({
           </Text>
 
           <Text className="mt-2 text-xs text-gray-400">
-            {new Date(repayment.repayment_date).toLocaleDateString("en-IN")}
+            {new Date(
+              repayment.repayment_date
+            ).toLocaleDateString("en-IN")}
           </Text>
 
           {repayment.notes ? (
@@ -215,21 +196,13 @@ export default function RepaymentCard({
             </Text>
           ) : null}
         </View>
-
-        {/* Existing Payment Proof */}
-        {repayment.image_url ? (
-          <Image
-            source={{ uri: repayment.image_url }}
-            className="ml-3 h-16 w-16 rounded-xl"
-            resizeMode="cover"
-          />
-        ) : null}
       </View>
 
       {/* Edit Form */}
       {isEditing && (
         <View className="mt-5 border-t border-[#293548] pt-4">
 
+          {/* Amount */}
           <Text className="mb-2 font-semibold text-white">
             Amount (₹)
           </Text>
@@ -243,6 +216,7 @@ export default function RepaymentCard({
             className="rounded-xl border border-[#293548] bg-[#111827] px-4 py-3 text-white"
           />
 
+          {/* Repayment Date */}
           <Text className="mb-2 mt-4 font-semibold text-white">
             Repayment Date
           </Text>
@@ -271,6 +245,7 @@ export default function RepaymentCard({
             />
           )}
 
+          {/* Notes */}
           <Text className="mb-2 mt-4 font-semibold text-white">
             Notes
           </Text>
@@ -286,41 +261,9 @@ export default function RepaymentCard({
             className="min-h-20 rounded-xl border border-[#293548] bg-[#111827] px-4 py-3 text-white"
           />
 
-          {/* Replace Image */}
-          <Text className="mb-2 mt-4 font-semibold text-white">
-            Payment Proof
-          </Text>
-
-          {image ? (
-            <View>
-              <Image
-                source={{ uri: image.uri }}
-                className="h-40 w-full rounded-xl"
-                resizeMode="contain"
-              />
-
-              <TouchableOpacity
-                onPress={() => setImage(null)}
-                className="mt-2 rounded-lg bg-red-600 py-2"
-              >
-                <Text className="text-center font-semibold text-white">
-                  Remove Selected Image
-                </Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <TouchableOpacity
-              onPress={handlePickImage}
-              className="items-center rounded-xl border border-dashed border-[#46546A] bg-[#111827] p-4"
-            >
-              <Text className="font-semibold text-emerald-400">
-                + Replace Payment Image
-              </Text>
-            </TouchableOpacity>
-          )}
-
           {/* Update / Cancel */}
           <View className="mt-5 flex-row gap-3">
+
             <TouchableOpacity
               onPress={handleCancelEdit}
               disabled={loading}
@@ -344,6 +287,7 @@ export default function RepaymentCard({
                 </Text>
               )}
             </TouchableOpacity>
+
           </View>
         </View>
       )}
@@ -351,6 +295,7 @@ export default function RepaymentCard({
       {/* Edit / Delete Buttons */}
       {!isEditing && (
         <View className="mt-4 flex-row gap-3 border-t border-[#293548] pt-3">
+
           <TouchableOpacity
             onPress={() => setIsEditing(true)}
             disabled={loading}
@@ -370,8 +315,10 @@ export default function RepaymentCard({
               Delete
             </Text>
           </TouchableOpacity>
+
         </View>
       )}
+
     </View>
   );
 }

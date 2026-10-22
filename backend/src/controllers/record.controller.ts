@@ -88,24 +88,23 @@ export const getAllRepayments = async (
 
     const result = await pool.query(
       `SELECT
-          r.id,
-          r.loan_id,
-          r.amount,
-          r.image_url,
-          r.notes,
-          r.repayment_date,
-          r.created_at,
-          l.friend_name,
-          l.amount AS original_loan_amount
+      r.id,
+      r.loan_id,
+      r.amount,
+      r.notes,
+      r.repayment_date,
+      r.created_at,
+      l.friend_name,
+      l.amount AS original_loan_amount
 
-       FROM repayments r
+   FROM repayments r
 
-       INNER JOIN loans l
-         ON r.loan_id = l.id
+   INNER JOIN loans l
+     ON r.loan_id = l.id
 
-       WHERE l.user_id = $1
+   WHERE l.user_id = $1
 
-       ORDER BY r.repayment_date DESC`,
+   ORDER BY r.repayment_date DESC`,
       [userId]
     );
 
