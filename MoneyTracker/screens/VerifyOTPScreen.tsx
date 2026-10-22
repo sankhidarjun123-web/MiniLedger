@@ -31,7 +31,7 @@ export default function VerifyOTPScreen({ navigation, route }: Props) {
 
       await verify(phone, otp);
 
-      navigation.replace("Dashboard");
+      navigation.replace("MainTabs");
     } catch (error: any) {
       console.error(
         "OTP verification failed:",

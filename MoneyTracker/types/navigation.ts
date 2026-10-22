@@ -3,6 +3,6 @@ export type RootStackParamList = {
   VerifyOTP: {
     phone: string;
   };
-  Dashboard: undefined;
+  MainTabs: undefined;
   AddLoan: undefined;
 };
