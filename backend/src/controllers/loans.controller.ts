@@ -51,7 +51,6 @@ export const addLoan = async (req: Request, res: Response) => {
         message: "Only image files are allowed",
       });
     }
-
     // Insert loan into PostgreSQL
     const result = await pool.query(
       `INSERT INTO loans (
