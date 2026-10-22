@@ -9,6 +9,49 @@ const otpStore = new Map<
   { otp: string; expiresAt: number }
 >();
 
+
+export const getCurrentUser = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const userId = req.userId;
+
+    const result = await pool.query(
+      `SELECT id, mobile_number, is_verified
+       FROM users
+       WHERE id = $1`,
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const user = result.rows[0];
+
+    return res.status(200).json({
+      success: true,
+      user: {
+        id: user.id,
+        mobileNumber: user.mobile_number,
+        isVerified: user.is_verified,
+      },
+    });
+  } catch (error) {
+    console.error("Get current user error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+
 export const registerUser = async (req: Request, res: Response) => {
   try {
     const { mobileNumber } = req.body;

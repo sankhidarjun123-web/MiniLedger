@@ -1,8 +1,11 @@
 import { Router } from "express";
-import { registerUser, verifyOTP } from "../controllers/auth.controller.js";
+import { getCurrentUser, registerUser, verifyOTP } from "../controllers/auth.controller.js";
+import { authenticate } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
+
+router.get("check-user", authenticate, getCurrentUser);
 
 router.post("/user", registerUser);
 
