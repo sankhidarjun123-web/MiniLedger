@@ -53,7 +53,8 @@ export default function RepaymentsScreen() {
           <RepaymentCard
             key={repayment.id}
             repayment={repayment}
-          />
+            onChanged={fetchRepayments}
+        />
         ))
       )}
     </ScrollView>

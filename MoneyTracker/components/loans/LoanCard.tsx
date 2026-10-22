@@ -176,36 +176,49 @@ export default function LoanCard({
         )}
       </View>
 
-      {/* Edit and Delete */}
-      <View className="mt-4 flex-row gap-3">
-        <TouchableOpacity
-          onPress={handleEdit}
-          className="flex-1 items-center rounded-xl bg-blue-600 py-3"
-        >
-          <Text className="font-semibold text-white">
-            Edit Loan
-          </Text>
-        </TouchableOpacity>
+      {/* Action Buttons */}
+      <View className="mt-5 gap-3">
 
-        <TouchableOpacity
-          onPress={handleDelete}
-          className="flex-1 items-center rounded-xl bg-red-600 py-3"
-        >
-          <Text className="font-semibold text-white">
-            Delete
-          </Text>
-        </TouchableOpacity>
-
+        {/* Record Repayment - Top */}
         <TouchableOpacity
           onPress={handleAddRepayment}
           disabled={remainingAmount <= 0}
-          className={`mt-3 items-center rounded-xl py-3 ${remainingAmount <= 0 ? "bg-gray-600" : "bg-emerald-600"
+          activeOpacity={0.8}
+          className={`items-center justify-center rounded-xl py-3.5 ${remainingAmount <= 0
+              ? "bg-gray-600"
+              : "bg-emerald-600"
             }`}
         >
-          <Text className="font-semibold text-white">
-            {remainingAmount <= 0 ? "Fully Repaid" : "Record Repayment"}
+          <Text className="font-bold text-white">
+            {remainingAmount <= 0
+              ? "Fully Repaid"
+              : "＋ Record Repayment"}
           </Text>
         </TouchableOpacity>
+
+        {/* Edit and Delete - Bottom */}
+        <View className="flex-row gap-3">
+          <TouchableOpacity
+            onPress={handleEdit}
+            activeOpacity={0.8}
+            className="flex-1 items-center justify-center rounded-xl border border-blue-500 bg-blue-600 py-3"
+          >
+            <Text className="font-semibold text-white">
+              Edit Loan
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={handleDelete}
+            activeOpacity={0.8}
+            className="flex-1 items-center justify-center rounded-xl border border-red-500 bg-red-600 py-3"
+          >
+            <Text className="font-semibold text-white">
+              Delete
+            </Text>
+          </TouchableOpacity>
+        </View>
+
       </View>
     </View>
   );
