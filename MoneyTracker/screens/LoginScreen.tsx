@@ -10,16 +10,34 @@ import {
 } from "react-native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../types/navigation";
+import { useAuth } from "../contexts/AuthContext";
+
 
 type Props = NativeStackScreenProps<RootStackParamList, "Login">;
 
 export default function LoginScreen({ navigation }: Props) {
   const [phone, setPhone] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSendOTP = () => {
-    if (phone.length !== 10) return;
+  const { register } = useAuth();
 
-    navigation.navigate("VerifyOTP", { phone });
+  const handleSendOTP = async () => {
+    if (phone.length !== 10 || isSubmitting) return;
+
+    try {
+      setIsSubmitting(true);
+
+      await register(phone);
+
+      navigation.navigate("VerifyOTP", { phone });
+    } catch (error: any) {
+      console.error(
+        "OTP request failed:",
+        error.response?.data || error.message
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -74,15 +92,14 @@ export default function LoginScreen({ navigation }: Props) {
 
           <Pressable
             onPress={handleSendOTP}
-            disabled={phone.length !== 10}
-            className={`items-center rounded-xl py-4 ${
-              phone.length === 10
-                ? "bg-blue-600"
-                : "bg-slate-700"
-            }`}
+            disabled={phone.length !== 10 || isSubmitting}
+            className={`items-center rounded-xl py-4 ${phone.length === 10 && !isSubmitting
+              ? "bg-blue-600"
+              : "bg-slate-700"
+              }`}
           >
             <Text className="text-base font-bold text-white">
-              Continue with OTP
+              {isSubmitting ? "Sending OTP..." : "Continue with OTP"}
             </Text>
           </Pressable>
         </View>

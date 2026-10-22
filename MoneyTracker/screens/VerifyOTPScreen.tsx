@@ -8,7 +8,7 @@ import {
   Platform,
   StatusBar,
 } from "react-native";
-
+import { useAuth } from "../contexts/AuthContext";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import type { RootStackParamList } from "../types/navigation";
 
@@ -16,14 +16,34 @@ type Props = NativeStackScreenProps<RootStackParamList, "VerifyOTP">;
 
 export default function VerifyOTPScreen({ navigation, route }: Props) {
   const [otp, setOtp] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   const { phone } = route.params;
+  const { verify } = useAuth();
 
-  const handleVerifyOTP = () => {
-    if (otp.length !== 6) return;
+  const handleVerifyOTP = async () => {
+    if (otp.length !== 6 || isSubmitting) return;
 
-    // TODO: Connect to backend /auth/verify-otp
-    navigation.replace("Dashboard");
+    try {
+      setIsSubmitting(true);
+      setError("");
+
+      await verify(phone, otp);
+
+      navigation.replace("Dashboard");
+    } catch (error: any) {
+      console.error(
+        "OTP verification failed:",
+        error.response?.data || error.message
+      );
+
+      setError(
+        error.response?.data?.message || "OTP verification failed. Please try again."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -78,25 +98,19 @@ export default function VerifyOTPScreen({ navigation, route }: Props) {
 
           <Pressable
             onPress={handleVerifyOTP}
-            disabled={otp.length !== 6}
-            className={`items-center rounded-xl py-4 ${
-              otp.length === 6 ? "bg-blue-600" : "bg-slate-700"
-            }`}
+            disabled={otp.length !== 6 || isSubmitting}
+            className={`items-center rounded-xl py-4 ${otp.length === 6 && !isSubmitting
+              ? "bg-blue-600"
+              : "bg-slate-700"
+              }`}
           >
             <Text className="text-base font-bold text-white">
-              Verify & Continue
+              {isSubmitting ? "Verifying..." : "Verify & Continue"}
             </Text>
           </Pressable>
-
-          <Pressable
-            onPress={() => navigation.goBack()}
-            className="items-center py-3"
-          >
-            <Text className="text-sm font-semibold text-blue-400">
-              Change phone number
-            </Text>
-          </Pressable>
-
+          {error ? (
+            <Text className="text-sm text-red-400">{error}</Text>
+          ) : null}
         </View>
 
         <Text className="mt-10 text-center text-xs text-slate-500">

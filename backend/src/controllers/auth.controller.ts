@@ -56,6 +56,7 @@ export const registerUser = async (req: Request, res: Response) => {
   try {
     const { mobileNumber } = req.body;
 
+    console.log(mobileNumber);
     // Validate mobile number
     if (!mobileNumber || !/^[0-9]{10}$/.test(mobileNumber)) {
       return res.status(400).json({

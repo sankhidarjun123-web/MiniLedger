@@ -5,7 +5,7 @@ import { authenticate } from "../middlewares/auth.middleware.js";
 const router = Router();
 
 
-router.get("check-user", authenticate, getCurrentUser);
+router.get("/check-user", authenticate, getCurrentUser);
 
 router.post("/user", registerUser);
 
