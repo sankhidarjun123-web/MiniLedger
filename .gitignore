@@ -1,0 +1,87 @@
+
+# ==========================================
+# React Native - MoneyTracker
+# ==========================================
+MoneyTracker/node_modules/
+MoneyTracker/.expo/
+MoneyTracker/.expo-shared/
+MoneyTracker/web-build/
+MoneyTracker/dist/
+
+# Android / iOS builds
+MoneyTracker/android/.gradle/
+MoneyTracker/android/app/build/
+MoneyTracker/ios/Pods/
+MoneyTracker/ios/build/
+
+# ==========================================
+# Node.js Backend
+# ==========================================
+backend/node_modules/
+backend/dist/
+backend/build/
+backend/coverage/
+backend/logs/
+
+# ==========================================
+# Environment Variables
+# ==========================================
+MoneyTracker/.env
+MoneyTracker/.env.*
+!MoneyTracker/.env.example
+
+backend/.env
+backend/.env.*
+backned/dist
+!backend/.env.example
+
+# ==========================================
+# Logs
+# ==========================================
+**/*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# ==========================================
+# TypeScript
+# ==========================================
+**/*.tsbuildinfo
+
+# ==========================================
+# Testing
+# ==========================================
+**/coverage/
+**/.nyc_output/
+
+# ==========================================
+# Native signing files
+# ==========================================
+*.jks
+*.keystore
+*.p8
+*.p12
+*.mobileprovision
+
+# ==========================================
+# IDE
+# ==========================================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ==========================================
+# Operating System
+# ==========================================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ==========================================
+# Temporary files
+# ==========================================
+*.tmp
+*.temp
+*.bak
+*.cache
