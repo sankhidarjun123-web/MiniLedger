@@ -4,7 +4,8 @@ import type { Request, Response } from "express";
 
 // imported routes
 import authRoute from "./routes/auth.route.js";
-
+import recordRoute from "./routes/record.route.js";
+import { authenticate } from "./middlewares/auth.middleware.js";
 
 const app = express();
 
@@ -18,7 +19,7 @@ app.get("/", (req: Request, res: Response) => {
     res.end("Request recieved");
 })
 app.use("/auth", authRoute);
-
+app.use("/records", authenticate, recordRoute);
 
 const PORT = 5000;
 
