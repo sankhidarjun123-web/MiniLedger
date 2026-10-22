@@ -27,7 +27,7 @@ export default function LoanCard({
   const isOverdue =
     remainingAmount > 0 &&
     new Date(loan.due_date) <
-      new Date(new Date().toDateString());
+    new Date(new Date().toDateString());
 
   const status =
     remainingAmount <= 0
@@ -54,6 +54,14 @@ export default function LoanCard({
 
   const handleEdit = () => {
     navigation.navigate("AddLoan", { loan });
+  };
+
+  const handleAddRepayment = () => {
+    navigation.navigate("AddRepayment", {
+      loanId: loan.id,
+      remainingAmount: remainingAmount,
+      friendName: loan.friend_name,
+    });
   };
 
   const handleDelete = () => {
@@ -87,7 +95,7 @@ export default function LoanCard({
               Alert.alert(
                 "Error",
                 error.response?.data?.message ||
-                  "Failed to delete loan."
+                "Failed to delete loan."
               );
             }
           },
@@ -185,6 +193,17 @@ export default function LoanCard({
         >
           <Text className="font-semibold text-white">
             Delete
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={handleAddRepayment}
+          disabled={remainingAmount <= 0}
+          className={`mt-3 items-center rounded-xl py-3 ${remainingAmount <= 0 ? "bg-gray-600" : "bg-emerald-600"
+            }`}
+        >
+          <Text className="font-semibold text-white">
+            {remainingAmount <= 0 ? "Fully Repaid" : "Record Repayment"}
           </Text>
         </TouchableOpacity>
       </View>

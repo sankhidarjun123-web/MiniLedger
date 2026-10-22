@@ -164,7 +164,7 @@ export default function AddLoanScreen({
           formData
         );
       } else {
-        await api.post("/loan/add", formData);
+        await api.post("/loans/add", formData);
       }
 
       Alert.alert(

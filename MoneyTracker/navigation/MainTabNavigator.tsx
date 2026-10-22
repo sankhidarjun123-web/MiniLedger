@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import HomeScreen from "../screens/HomeScreen";
 import LoansScreen from "../screens/LoansScreen";
 import RepaymentsScreen from "../screens/RepaymentsScreen";
-import AddLoanScreen from "../screens/AddLoan";
+import AddLoanScreen from "../screens/AddLoanScreen";
 
 import { MainTabParamList } from "../types";
 

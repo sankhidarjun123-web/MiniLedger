@@ -8,7 +8,8 @@ import VerifyOTPScreen from "../screens/VerifyOTPScreen";
 import MainTabNavigator from "./MainTabNavigator";
 
 import type { RootStackParamList } from "../types/navigation";
-import AddLoanScreen from "../screens/AddLoan";
+import AddLoanScreen from "../screens/AddLoanScreen";
+import AddRepaymentScreen from "../screens/AddRepaymentScreen";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -33,8 +34,13 @@ export default function AppNavigator() {
           />
 
           <Stack.Screen
-          name="AddLoan"
-          component={AddLoanScreen}
+            name="AddLoan"
+            component={AddLoanScreen}
+          />
+
+          <Stack.Screen
+            name="AddRepayment"
+            component={AddRepaymentScreen}
           />
         </>
       ) : (
