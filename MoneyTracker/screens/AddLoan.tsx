@@ -85,7 +85,7 @@ export default function AddLoanScreen({ navigation }: Props) {
         } as any);
       }
 
-      await api.post("/loans", formData);
+      await api.post("/loans/add", formData);
 
       Alert.alert("Success", "Loan added successfully.", [
         {
