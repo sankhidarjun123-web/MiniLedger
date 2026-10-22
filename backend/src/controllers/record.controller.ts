@@ -21,7 +21,11 @@ export const getAllLoans = async (req: Request, res: Response) => {
           l.amount,
           l.due_date,
           l.notes,
-          l.receipt_image_url,
+          CASE
+            WHEN l.receipt_image_url IS NOT NULL
+            THEN encode(l.receipt_image_url, 'base64')
+            ELSE NULL
+          END AS receipt_image,
           l.created_at,
           l.updated_at,
 

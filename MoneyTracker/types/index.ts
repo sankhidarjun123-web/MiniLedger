@@ -3,10 +3,13 @@ export interface Loan {
   friend_name: string;
   amount: number;
   due_date: string;
-  notes?: string;
+  notes?: string | null;
   created_at: string;
+  updated_at?: string;
   total_repaid: number;
   remaining_amount: number;
+  status?: string;
+  receipt_image?: string | null;
 }
 
 export interface Repayment {
@@ -23,7 +26,7 @@ export type RootStackParamList = {
   Login: undefined;
   VerifyOTP: { phone: string };
   MainTabs: undefined;
-  AddLoan: undefined;
+  AddLoan: { loan?: Loan } | undefined;
   AddRepayment: { loanId?: string };
 };
 

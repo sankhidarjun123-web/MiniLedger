@@ -9,61 +9,121 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native";
+
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import * as ImagePicker from "expo-image-picker";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { Ionicons } from "@expo/vector-icons";
 
 import { api } from "../config/axios";
 import { RootStackParamList } from "../types";
 
 type Props = NativeStackScreenProps<RootStackParamList, "AddLoan">;
 
-export default function AddLoanScreen({ navigation }: Props) {
-  const [friendName, setFriendName] = useState("");
-  const [amount, setAmount] = useState("");
-  const [dueDate, setDueDate] = useState(new Date());
-  const [notes, setNotes] = useState("");
-  const [receipt, setReceipt] = useState<ImagePicker.ImagePickerAsset | null>(null);
+export default function AddLoanScreen({
+  navigation,
+  route,
+}: Props) {
+  const existingLoan = route.params?.loan;
+  const isEditing = Boolean(existingLoan);
+
+  const [friendName, setFriendName] = useState(
+    existingLoan?.friend_name ?? ""
+  );
+
+  const [amount, setAmount] = useState(
+    existingLoan ? String(existingLoan.amount) : ""
+  );
+
+  const [dueDate, setDueDate] = useState(
+    existingLoan
+      ? new Date(`${existingLoan.due_date.split("T")[0]}T12:00:00`)
+      : new Date()
+  );
+
+  const [notes, setNotes] = useState(
+    existingLoan?.notes ?? ""
+  );
+
+  const [receipt, setReceipt] =
+    useState<ImagePicker.ImagePickerAsset | null>(null);
 
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Existing receipt or newly selected receipt.
+  const receiptPreview = receipt?.uri
+    ? receipt.uri
+    : existingLoan?.receipt_image
+      ? `data:image/jpeg;base64,${existingLoan.receipt_image}`
+      : null;
+
+  // Pick receipt image
   const pickReceipt = async () => {
-    const permission =
-      await ImagePicker.requestMediaLibraryPermissionsAsync();
+    try {
+      const permission =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-    if (!permission.granted) {
-      Alert.alert("Permission required", "Allow access to your photos.");
-      return;
-    }
+      if (!permission.granted) {
+        Alert.alert(
+          "Permission required",
+          "Please allow access to your photos."
+        );
+        return;
+      }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsEditing: true,
-      quality: 0.8,
-    });
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        allowsEditing: true,
+        quality: 0.8,
+      });
 
-    if (!result.canceled) {
-      setReceipt(result.assets[0]);
+      if (!result.canceled) {
+        setReceipt(result.assets[0]);
+      }
+    } catch (error) {
+      console.error("Image picker error:", error);
+
+      Alert.alert("Error", "Unable to select image.");
     }
   };
 
+  // Date picker handler
+  const handleDateChange = (
+    event: any,
+    selectedDate?: Date
+  ) => {
+    setShowDatePicker(false);
+
+    if (event.type === "set" && selectedDate) {
+      setDueDate(selectedDate);
+    }
+  };
+
+  // Add or update loan
   const handleSubmit = async () => {
     const parsedAmount = Number(amount);
 
     if (!friendName.trim()) {
-      Alert.alert("Missing information", "Enter your friend's name.");
+      Alert.alert(
+        "Missing information",
+        "Please enter your friend's name."
+      );
       return;
     }
 
-    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
-      Alert.alert("Invalid amount", "Enter a valid loan amount.");
+    if (
+      !Number.isFinite(parsedAmount) ||
+      parsedAmount <= 0
+    ) {
+      Alert.alert(
+        "Invalid amount",
+        "Please enter a valid loan amount."
+      );
       return;
     }
 
-    if (dueDate < new Date(new Date().setHours(0, 0, 0, 0))) {
-      Alert.alert("Invalid date", "Due date cannot be in the past.");
+    if (Number.isNaN(dueDate.getTime())) {
+      Alert.alert("Invalid date", "Please select a valid due date.");
       return;
     }
 
@@ -74,34 +134,61 @@ export default function AddLoanScreen({ navigation }: Props) {
 
       formData.append("friendName", friendName.trim());
       formData.append("amount", String(parsedAmount));
-      formData.append("dueDate", dueDate.toISOString().split("T")[0]);
+      formData.append(
+        "dueDate",
+        `${dueDate.getFullYear()}-${String(
+          dueDate.getMonth() + 1
+        ).padStart(2, "0")}-${String(
+          dueDate.getDate()
+        ).padStart(2, "0")}`
+      );
       formData.append("notes", notes.trim());
 
+      // Attach only if a new image was selected.
       if (receipt) {
-        formData.append("receipt", {
-          uri: receipt.uri,
-          name: receipt.fileName || `loan-receipt-${Date.now()}.jpg`,
-          type: receipt.mimeType || "image/jpeg",
-        } as any);
+        formData.append(
+          "receipt",
+          {
+            uri: receipt.uri,
+            name:
+              receipt.fileName ||
+              `loan-receipt-${Date.now()}.jpg`,
+            type: receipt.mimeType || "image/jpeg",
+          } as any
+        );
       }
 
-      await api.post("/loans/add", formData);
+      if (isEditing && existingLoan) {
+        await api.put(
+          `/loans/change/${existingLoan.id}`,
+          formData
+        );
+      } else {
+        await api.post("/loan/add", formData);
+      }
 
-      Alert.alert("Success", "Loan added successfully.", [
-        {
-          text: "OK",
-          onPress: () => navigation.goBack(),
-        },
-      ]);
+      Alert.alert(
+        "Success",
+        isEditing
+          ? "Loan updated successfully."
+          : "Loan added successfully.",
+        [
+          {
+            text: "OK",
+            onPress: () => navigation.goBack(),
+          },
+        ]
+      );
     } catch (error: any) {
       console.error(
-        "Add loan error:",
+        "Save loan error:",
         error.response?.data || error.message
       );
 
       Alert.alert(
         "Error",
-        error.response?.data?.message || "Unable to add loan."
+        error.response?.data?.message ||
+          "Unable to save loan."
       );
     } finally {
       setLoading(false);
@@ -114,16 +201,19 @@ export default function AddLoanScreen({ navigation }: Props) {
       contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
       keyboardShouldPersistTaps="handled"
     >
-      <Text className="text-2xl font-bold text-white">
-        Add New Loan
+      {/* Header */}
+      <Text className="mb-2 text-2xl font-bold text-white">
+        {isEditing ? "Update Loan" : "Add New Loan"}
       </Text>
 
-      <Text className="mt-2 text-sm text-gray-400">
-        Keep track of money you've lent.
+      <Text className="mb-6 text-sm text-gray-400">
+        {isEditing
+          ? "Update the details of your existing loan."
+          : "Record money you have lent to someone."}
       </Text>
 
       {/* Friend Name */}
-      <Text className="mb-2 mt-7 text-sm font-medium text-gray-300">
+      <Text className="mb-2 text-sm font-medium text-gray-300">
         Friend's Name *
       </Text>
 
@@ -131,124 +221,116 @@ export default function AddLoanScreen({ navigation }: Props) {
         value={friendName}
         onChangeText={setFriendName}
         placeholder="Enter friend's name"
-        placeholderTextColor="#8491A5"
-        className="rounded-xl border border-[#293548] bg-[#1B2432] px-4 py-4 text-white"
+        placeholderTextColor="#718096"
+        className="mb-5 rounded-xl border border-[#293548] bg-[#1B2432] px-4 py-4 text-white"
       />
 
       {/* Amount */}
-      <Text className="mb-2 mt-5 text-sm font-medium text-gray-300">
-        Amount (₹) *
+      <Text className="mb-2 text-sm font-medium text-gray-300">
+        Loan Amount (₹) *
       </Text>
 
-      <View className="flex-row items-center rounded-xl border border-[#293548] bg-[#1B2432] px-4">
-        <Text className="mr-2 text-lg text-emerald-400">₹</Text>
-
-        <TextInput
-          value={amount}
-          onChangeText={(value) =>
-            setAmount(value.replace(/[^0-9.]/g, ""))
-          }
-          keyboardType="decimal-pad"
-          placeholder="0.00"
-          placeholderTextColor="#8491A5"
-          className="flex-1 py-4 text-white"
-        />
-      </View>
+      <TextInput
+        value={amount}
+        onChangeText={setAmount}
+        placeholder="Enter amount"
+        placeholderTextColor="#718096"
+        keyboardType="decimal-pad"
+        className="mb-5 rounded-xl border border-[#293548] bg-[#1B2432] px-4 py-4 text-white"
+      />
 
       {/* Due Date */}
-      <Text className="mb-2 mt-5 text-sm font-medium text-gray-300">
+      <Text className="mb-2 text-sm font-medium text-gray-300">
         Due Date *
       </Text>
 
       <TouchableOpacity
         onPress={() => setShowDatePicker(true)}
-        className="flex-row items-center justify-between rounded-xl border border-[#293548] bg-[#1B2432] px-4 py-4"
+        className="mb-5 rounded-xl border border-[#293548] bg-[#1B2432] px-4 py-4"
       >
         <Text className="text-white">
-          {dueDate.toLocaleDateString("en-IN")}
+          {dueDate.toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "long",
+            year: "numeric",
+          })}
         </Text>
-
-        <Ionicons name="calendar-outline" size={20} color="#34D399" />
       </TouchableOpacity>
 
       {showDatePicker && (
         <DateTimePicker
           value={dueDate}
           mode="date"
-          minimumDate={new Date()}
-          onChange={(_, selectedDate) => {
-            setShowDatePicker(false);
-            if (selectedDate) setDueDate(selectedDate);
-          }}
+          display="default"
+          onChange={handleDateChange}
         />
       )}
 
       {/* Notes */}
-      <Text className="mb-2 mt-5 text-sm font-medium text-gray-300">
-        Notes (Optional)
+      <Text className="mb-2 text-sm font-medium text-gray-300">
+        Notes
       </Text>
 
       <TextInput
         value={notes}
         onChangeText={setNotes}
-        placeholder="Add any additional details..."
-        placeholderTextColor="#8491A5"
+        placeholder="Add some details about this loan..."
+        placeholderTextColor="#718096"
         multiline
-        textAlignVertical="top"
         numberOfLines={4}
-        className="min-h-28 rounded-xl border border-[#293548] bg-[#1B2432] px-4 py-3 text-white"
+        textAlignVertical="top"
+        className="mb-5 min-h-28 rounded-xl border border-[#293548] bg-[#1B2432] px-4 py-4 text-white"
       />
 
-      {/* Receipt */}
-      <Text className="mb-2 mt-5 text-sm font-medium text-gray-300">
+      {/* Receipt Image */}
+      <Text className="mb-2 text-sm font-medium text-gray-300">
         Loan Receipt (Optional)
       </Text>
 
-      <TouchableOpacity
-        onPress={pickReceipt}
-        className="items-center justify-center rounded-xl border border-dashed border-[#526178] bg-[#1B2432] p-6"
-      >
-        {receipt ? (
+      {receiptPreview ? (
+        <View className="mb-4">
           <Image
-            source={{ uri: receipt.uri }}
-            className="h-40 w-full rounded-lg"
+            source={{ uri: receiptPreview }}
+            className="h-52 w-full rounded-xl bg-[#1B2432]"
             resizeMode="contain"
           />
-        ) : (
-          <>
-            <Ionicons name="cloud-upload-outline" size={32} color="#34D399" />
 
-            <Text className="mt-2 font-medium text-white">
-              Upload Receipt
-            </Text>
-
-            <Text className="mt-1 text-xs text-gray-400">
-              Choose an image from your gallery
-            </Text>
-          </>
-        )}
-      </TouchableOpacity>
-
-      {receipt && (
-        <TouchableOpacity
-          onPress={() => setReceipt(null)}
-          className="mt-2 self-end"
-        >
-          <Text className="text-sm text-red-400">Remove image</Text>
-        </TouchableOpacity>
+          <Text className="mt-2 text-xs text-gray-400">
+            {receipt
+              ? "New receipt selected"
+              : "Previously uploaded receipt"}
+          </Text>
+        </View>
+      ) : (
+        <View className="mb-4 items-center justify-center rounded-xl border border-dashed border-[#46546A] bg-[#1B2432] p-8">
+          <Text className="text-sm text-gray-400">
+            No receipt image selected
+          </Text>
+        </View>
       )}
+
+      <TouchableOpacity
+        onPress={pickReceipt}
+        className="mb-6 items-center rounded-xl border border-blue-500 py-4"
+      >
+        <Text className="font-semibold text-blue-400">
+          {receiptPreview ? "Change Receipt Image" : "Upload Receipt Image"}
+        </Text>
+      </TouchableOpacity>
 
       {/* Submit */}
       <TouchableOpacity
-        disabled={loading}
         onPress={handleSubmit}
-        className="mt-8 items-center rounded-xl bg-emerald-400 py-4"
+        disabled={loading}
+        className={`items-center rounded-xl py-4 ${
+          loading ? "bg-blue-800" : "bg-blue-600"
+        }`}
       >
         {loading ? (
-          <ActivityIndicator color="#111827" />
+          <ActivityIndicator color="#FFFFFF" />
         ) : (
-          <Text className="font-bold text-[#111827]">
-            Save Loan
+          <Text className="font-bold text-white">
+            {isEditing ? "Update Loan" : "Save Loan"}
           </Text>
         )}
       </TouchableOpacity>
