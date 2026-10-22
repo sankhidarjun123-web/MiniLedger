@@ -10,6 +10,7 @@ import {
   registerUser,
   verifyOTP,
   getCurrentUser,
+  deleteAccount as deleteAccountRequest,
 } from "../services/auth.service";
 
 import {
@@ -30,6 +31,7 @@ type AuthContextType = {
   register: (mobileNumber: string) => Promise<void>;
   verify: (mobileNumber: string, otp: string) => Promise<void>;
   logout: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -84,6 +86,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
   };
 
+  // Delete account
+  const deleteAccount = async () => {
+    await deleteAccountRequest();
+
+    await removeToken();
+    setUser(null);
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -92,6 +102,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         register,
         verify,
         logout,
+        deleteAccount,
       }}
     >
       {children}

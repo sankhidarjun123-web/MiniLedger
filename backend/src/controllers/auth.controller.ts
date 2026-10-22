@@ -208,3 +208,45 @@ export const verifyOTP = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const deleteAccount = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const userId = req.userId;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized. Please login again.",
+      });
+    }
+
+    const result = await pool.query(
+      `DELETE FROM users
+       WHERE id = $1
+       RETURNING id`,
+      [userId]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "User account not found.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Account deleted successfully.",
+    });
+  } catch (error) {
+    console.error("Delete account error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong while deleting your account.",
+    });
+  }
+};

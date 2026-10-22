@@ -38,4 +38,5 @@ export type MainTabParamList = {
     Home: undefined;
     Loans: undefined;
     Repayments: undefined;
+    Profile: undefined;
 };

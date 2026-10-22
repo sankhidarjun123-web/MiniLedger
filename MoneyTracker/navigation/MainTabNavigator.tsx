@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import HomeScreen from "../screens/HomeScreen";
 import LoansScreen from "../screens/LoansScreen";
 import RepaymentsScreen from "../screens/RepaymentsScreen";
-import AddLoanScreen from "../screens/AddLoanScreen";
+import ProfileScreen from "../screens/ProfileScreen";
 
 import { MainTabParamList } from "../types";
 
@@ -17,6 +17,7 @@ export default function MainTabNavigator() {
         headerShown: false,
         tabBarActiveTintColor: "#34D399",
         tabBarInactiveTintColor: "#8491A5",
+
         tabBarStyle: {
           backgroundColor: "#111827",
           borderTopColor: "#293548",
@@ -24,11 +25,13 @@ export default function MainTabNavigator() {
           paddingBottom: 8,
           paddingTop: 8,
         },
+
         tabBarIcon: ({ color, size }) => {
           const icons = {
             Home: "home-outline",
             Loans: "wallet-outline",
             Repayments: "receipt-outline",
+            Profile: "person-outline",
           } as const;
 
           return (
@@ -41,9 +44,25 @@ export default function MainTabNavigator() {
         },
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Loans" component={LoansScreen} />
-      <Tab.Screen name="Repayments" component={RepaymentsScreen} />
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+      />
+
+      <Tab.Screen
+        name="Loans"
+        component={LoansScreen}
+      />
+
+      <Tab.Screen
+        name="Repayments"
+        component={RepaymentsScreen}
+      />
+
+      <Tab.Screen
+        name="Profile"
+        component={ProfileScreen}
+      />
     </Tab.Navigator>
   );
 }
