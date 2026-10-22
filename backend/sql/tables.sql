@@ -48,8 +48,6 @@ CREATE TABLE repayments (
 
     amount NUMERIC(12, 2) NOT NULL,
 
-    image_url BYTEA,
-
     notes TEXT,
 
     repayment_date TIMESTAMPTZ NOT NULL DEFAULT NOW(),
